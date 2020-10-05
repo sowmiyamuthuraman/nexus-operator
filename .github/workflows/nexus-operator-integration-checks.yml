@@ -12,14 +12,18 @@ on:
     branches:
       - main
 jobs:
-  golint:
+  setEnv:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - name: Set up env variable
-        run: |
-          echo "GO_VERSION=1.14" >> $GITHUB_ENV
-          echo "OPERATOR_SDK_VERSION=v0.18.1" >> $GITHUB_ENV
+      - run: |
+            echo "GO_VERSION=1.14" >> $GITHUB_ENV
+            echo "OPERATOR_SDK_VERSION=v0.18.1" >> $GITHUB_ENV
+  golint:
+    name: Lint
+    needs: [setEnv]
+    runs-on: ubuntu-latest
+    steps:
       - uses: actions/checkout@v2
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v1
@@ -49,10 +53,9 @@ jobs:
 
   unit_test:
     name: Unit Tests
+    needs: [setEnv]
     runs-on: ubuntu-latest
     steps:
-      - name: Set up env variable
-        run: echo "GO_VERSION=1.14" >> $GITHUB_ENV
       - name: Set up Go ${{ env.GO_VERSION }}
         uses: actions/setup-go@v2
         with:
@@ -103,10 +106,6 @@ jobs:
       CREATE_NAMESPACE: false
       NAMESPACE_E2E: default
     steps:
-      - name: Set up env variable
-        run: |
-          echo "GO_VERSION=1.14" >> $GITHUB_ENV
-          echo "OPERATOR_SDK_VERSION=v0.18.1" >> $GITHUB_ENV
       - name: Check out code
         uses: actions/checkout@v2
       - name: Set up Go  ${{ env.GO_VERSION }}
