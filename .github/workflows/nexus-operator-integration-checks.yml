@@ -12,18 +12,14 @@ on:
     branches:
       - main
 jobs:
-  setEnv:
-    name: Lint
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          echo "GO_VERSION=1.14" >> $GITHUB_ENV
-          echo "OPERATOR_SDK_VERSION=v0.18.1" >> $GITHUB_ENV
   golint:
     name: Lint
-    needs: [setEnv]
     runs-on: ubuntu-latest
     steps:
+      - name: set environment variables
+        run: |
+           echo "GO_VERSION=1.14" >> $GITHUB_ENV
+           echo "OPERATOR_SDK_VERSION=v0.18.1" >> $GITHUB_ENV
       - uses: actions/checkout@v2
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v1
@@ -53,9 +49,13 @@ jobs:
 
   unit_test:
     name: Unit Tests
-    needs: [setEnv]
     runs-on: ubuntu-latest
     steps:
+      - name: set environment variables
+        run: |
+          echo "GO_VERSION=1.14" >> $GITHUB_ENV
+          echo "OPERATOR_SDK_VERSION=v0.18.1" >> $GITHUB_ENV
+
       - name: Set up Go ${{ env.GO_VERSION }}
         uses: actions/setup-go@v2
         with:
@@ -103,10 +103,17 @@ jobs:
     steps:
       - name: set environment variables
         run: |
+          echo "GO_VERSION=1.14" >> $GITHUB_ENV
+          echo "OPERATOR_SDK_VERSION=v0.18.1" >> $GITHUB_ENV
           echo "CLUSTER_NAME=operator-test" >> $GITHUB_ENV
           echo "KIND_VERSION=v0.8.1" >> $GITHUB_ENV
           echo "CREATE_NAMESPACE=false" >> $GITHUB_ENV
           echo "NAMESPACE_E2E=default" >> $GITHUB_ENV
+          echo "BUILDER=docker" >> $GITHUB_ENV
+          echo "CUSTOM_BASE_IMAGE=alpine:latest" >> $GITHUB_ENV
+          echo "RUN_WITH_IMAGE=true" >> $GITHUB_ENV
+          echo "TIMEOUT_E2E=20m" >> $GITHUB_ENV
+          echo "ADDITIONAL_FLAGS="-coverprofile=coverage_e2e.txt -covermode=atomic"" >> $GITHUB_ENV
       - name: Check out code
         uses: actions/checkout@v2
       - name: Set up Go  ${{ env.GO_VERSION }}
@@ -147,8 +154,6 @@ jobs:
 
       - name: Build Operator Image
         run: |
-          echo "BUILDER=docker" >> $GITHUB_ENV
-          echo "CUSTOM_BASE_IMAGE=alpine:latest" >> $GITHUB_ENV
           ./hack/go-build.sh
 
       - name: Load Operator Image
@@ -156,9 +161,6 @@ jobs:
 
       - name: Run e2e test
         run: |
-          echo "RUN_WITH_IMAGE=true" >> $GITHUB_ENV
-          echo "TIMEOUT_E2E=20m" >> $GITHUB_ENV
-          echo "ADDITIONAL_FLAGS="-coverprofile=coverage_e2e.txt -covermode=atomic"" >> $GITHUB_ENV
           ./hack/run-e2e-test.sh
 
       - name: Send Coverage Report
