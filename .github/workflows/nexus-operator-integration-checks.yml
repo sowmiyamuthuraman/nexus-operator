@@ -17,8 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-            echo "GO_VERSION=1.14" >> $GITHUB_ENV
-            echo "OPERATOR_SDK_VERSION=v0.18.1" >> $GITHUB_ENV
+          echo "GO_VERSION=1.14" >> $GITHUB_ENV
+          echo "OPERATOR_SDK_VERSION=v0.18.1" >> $GITHUB_ENV
   golint:
     name: Lint
     needs: [setEnv]
@@ -100,12 +100,13 @@ jobs:
     # we should wait for an ok from the other two
     needs: [golint, unit_test]
     runs-on: ubuntu-latest
-    env:
-      CLUSTER_NAME: operator-test
-      KIND_VERSION: v0.8.1
-      CREATE_NAMESPACE: false
-      NAMESPACE_E2E: default
     steps:
+      - name: set environment variables
+        run: |
+          echo "CLUSTER_NAME=operator-test" >> $GITHUB_ENV
+          echo "KIND_VERSION=v0.8.1" >> $GITHUB_ENV
+          echo "CREATE_NAMESPACE=false" >> $GITHUB_ENV
+          echo "NAMESPACE_E2E=default" >> $GITHUB_ENV
       - name: Check out code
         uses: actions/checkout@v2
       - name: Set up Go  ${{ env.GO_VERSION }}
@@ -145,21 +146,20 @@ jobs:
         run: ./hack/generate-manifests.sh
 
       - name: Build Operator Image
-        env:
-          BUILDER: docker
-          CUSTOM_BASE_IMAGE: alpine:latest
         run: |
+          echo "BUILDER=docker" >> $GITHUB_ENV
+          echo "CUSTOM_BASE_IMAGE=alpine:latest" >> $GITHUB_ENV
           ./hack/go-build.sh
 
       - name: Load Operator Image
         run: ./hack/ci/load-operator-image.sh
 
       - name: Run e2e test
-        env:
-          RUN_WITH_IMAGE: true
-          TIMEOUT_E2E: 20m
-          ADDITIONAL_FLAGS: "-coverprofile=coverage_e2e.txt -covermode=atomic"
-        run: ./hack/run-e2e-test.sh
+        run: |
+          echo "RUN_WITH_IMAGE=true" >> $GITHUB_ENV
+          echo "TIMEOUT_E2E=20m" >> $GITHUB_ENV
+          echo "ADDITIONAL_FLAGS="-coverprofile=coverage_e2e.txt -covermode=atomic"" >> $GITHUB_ENV
+          ./hack/run-e2e-test.sh
 
       - name: Send Coverage Report
         uses: codecov/codecov-action@v1
